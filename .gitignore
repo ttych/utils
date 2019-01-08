@@ -1,0 +1,8 @@
+# ignore builded files
+/bin/*
+
+# test
+/.test/*
+
+# tmp files
+*~
