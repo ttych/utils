@@ -1,0 +1,6 @@
+#!/bin/sh
+# -*- mode: shell -*-
+
+#%require% http.lib
+
+curl_json "$@"

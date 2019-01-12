@@ -30,8 +30,9 @@ build()
     [ "$build__src" = "$build__tgt" ] && return 3
 
     sed -e "s;^\#%require%  *;. $build__dir/;g" \
-        -e "s;^\#%toolsh_dir%;TOOLSH_DIR=\"$build__dir\";g" \
-        -e "s;^\#%toolsh_file%;TOOLSH_FILE=\"$build__tgt\";g" \
+        -e "s;^\#%utils_dir%;UTILS_DIR=\"$build__dir\";g" \
+        -e "s;^\#%utils_file%;UTILS_FILE=\"$build__tgt\";g" \
+        -e "s;%%utils_dir%%;$build__dir;g" \
         "$build__src" > "$build__tgt"
 
     build__right=755
