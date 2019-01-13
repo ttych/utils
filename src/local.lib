@@ -29,4 +29,10 @@ path_load_local()
 }
 path_load_local
 
+path_reload_local()
+{
+    path_purge "$LOCAL_DIR"
+    path_load_local
+}
+
 ############################################
