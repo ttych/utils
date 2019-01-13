@@ -1,0 +1,118 @@
+#!/bin/sh
+
+GIT=git
+
+_git_scm_info()
+{
+    _git_scm_info__inside_work_tree=$($GIT rev-parse --is-inside-work-tree 2>/dev/null)
+}
+
+git_is_inside()
+{
+    _git_scm_info
+}
+
+git_is_inside_work_tree()
+{
+    _git_scm_info || return 1
+    [ "$_git_scm_info__inside_work_tree" = 'true' ]
+}
+
+git_scm_add()
+{
+    [ -n "$1" ] || return 1
+    [ -f "$1" ] || return 1
+
+    _git_scm_info
+    [ "$_git_scm_info__inside_worktree" = "true" ] && $GIT add "$1"
+}
+
+_git_scm_branch_current_name()
+{
+    _git_scm_branch_current_name=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+}
+
+_git_scm_last_tag()
+{
+    _git_scm_last_tag=$(git describe --abbrev=0 --tags 2>/dev/null)
+}
+
+_git_scm_stable_state()
+{
+    test -z "$(git status --porcelain)"
+}
+
+_git_clone()
+{
+    _git_clone__opts=
+    _git_clone__name_opts=
+    _git_clone__suffix=
+    OPTIND=1
+    while getopts :123bs: _git_clone__opt; do
+        case $_git_clone__opt in
+            1|2|3) _git_clone__name_opts="$_git_clone__name_opts -$_git_clone__opt" ;;
+            b) _git_clone__opts="$_git_clone__opts --bare"
+               _git_clone__name_opts="$_git_clone__name_opts -$_git_clone__opt" ;;
+            s) _git_clone__name_opts="$_git_clone__name_opts -$_git_clone__opt $OPTARG" ;;
+        esac
+    done
+    shift $(($OPTIND - 1))
+
+    [ -z "$1" ] && return 1
+    _git_clone__target="$2"
+    if [ -z "$_git_clone__target" ]; then
+        _git_url_to_name $_git_clone__name_opts "$1" || return 1
+        _git_clone__target="$_git_url_to_name"
+        [ -z "$_git_url_to_name" ] && return 1
+        mkdir -p "$_git_url_to_name" || return 1
+    fi
+    git clone $_git_clone__opts "$1" $_git_clone__target
+}
+
+_git_url_to_name()
+{
+    _git_url_to_name=
+
+    _git_url_to_name__mode=1
+    _git_url_to_name__sep=/
+    _git_url_to_name__suffix=
+    OPTIND=1
+    while getopts :123bs: _git_url_to_name__opt; do
+        case $_git_url_to_name__opt in
+            1|2|3) _git_url_to_name__mode=$_git_url_to_name__opt ;;
+            s) _git_url_to_name__sep="$OPTARG" ;;
+            b) _git_url_to_name__suffix=.git ;;
+        esac
+    done
+    shift $(($OPTIND - 1))
+
+    [ -z "$1" ] && return 1
+
+    _git_url_to_name__ifs="$IFS"
+    IFS='@:/'
+    set -- $1
+    while [ $_git_url_to_name__mode -gt 0 ]; do
+        eval _git_url_to_name="${_git_url_to_name:+$_git_url_to_name$_git_url_to_name__sep}"\${$(($# + 1 - $_git_url_to_name__mode))}
+        _git_url_to_name__mode=$(($_git_url_to_name__mode - 1))
+    done
+    IFS="$_git_url_to_name__ifs"
+
+    _git_url_to_name="${_git_url_to_name%.git}${_git_url_to_name__suffix}"
+
+    _git_url_to_name="$(echo $_git_url_to_name | tr '[A-Z]' '[a-z]')"
+}
+
+###
+
+_semver_split()
+{
+    _semver_split="$1"
+    _semver_split__major=${_semver_split%%.*}
+    _semver_split=${_semver_split#$_semver_split__major}
+    _semver_split=${_semver_split#.}
+    _semver_split__minor=${_semver_split%%.*}
+    _semver_split=${_semver_split#$_semver_split__major}
+    _semver_split=${_semver_split#.}
+    _semver_split__fix=${_semver_split}
+    _semver_split__patch=${_semver_split__fix}
+}

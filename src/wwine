@@ -1,0 +1,160 @@
+#!/bin/sh
+# -*- mode: sh -*-
+
+WWINE_DIR="$HOME/.wwine"
+WWINE_ENV_FILE='wwine.env'
+_wwine_prefix()
+{
+    _wwine_prefix=
+    [ -z "$1" ] && return 1
+    _wwine_prefix="$WWINE_DIR/$1/"
+}
+
+_wwine_env()
+{
+    _wwine_env__name="$1"
+    _wwine_prefix "$1" || return 1
+    _wwine_env__prefix="$_wwine_prefix"
+    _wwine_env__arch="$(grep '^arch=' $_wwine_env__prefix/$WWINE_ENV_FILE 2>/dev/null)"
+    _wwine_env__arch="${_wwine_env__arch#arch=}"
+    _wwine_env__arch="${_wwine_env__arch:-win64}"
+}
+
+_wwine_dump_env()
+{
+    cat <<EOF > "$1/$WWINE_ENV_FILE"
+arch=${2:-win64}
+EOF
+}
+
+_wwine_list()
+(
+    cd "$WWINE_DIR" 2>/dev/null || return 1
+    for _wwine_list__i in *; do
+        _wwine_show "$_wwine_list__i"
+    done
+)
+
+_wwine_show()
+(
+    cd "$WWINE_DIR/$1" 2>/dev/null || return 1
+    echo "$1 : $PWD"
+    [ -r "$WWINE_ENV_FILE" ] || return 0
+    while read line; do
+        printf "  %s\n" "$line"
+    done < "$WWINE_ENV_FILE"
+)
+
+_wwine_setup()
+{
+    _wwine_env "$1" || return 1
+    if [ -d "$_wwine_env__prefix" ]; then
+        _wwine_destroy "$_wwine_env__name"
+    fi
+    mkdir -p "$_wwine_env__prefix" || return 1
+    _wwine_setup__arch="${2:-$_wwine_env__arch}"
+    WINEPREFIX="$_wwine_env__prefix" WINEARCH="$_wwine_setup__arch" winecfg
+    _wwine_dump_env "$_wwine_env__prefix" "$_wwine_setup__arch"
+}
+
+_wwine_destroy()
+{
+    _wwine_prefix "$1" || return 1
+    rm -Rf "$_wwine_prefix"
+}
+
+_wwine_exe_resolve()
+{
+    _wwine_exe_resolve=$(find "$1" -name "$2")
+    [ -z "$_wwine_exe_resolve" ] && return 1
+    return 0
+}
+
+_wwine_exe()
+{
+    _wwine_env "$1" || return 1
+    shift
+    _wwine_exe__cmd="$1" ; shift
+    if [ ! -r "$_wwine_exe__cmd" ]; then
+        if _wwine_exe_resolve "$_wwine_env__prefix" "$_wwine_exe__cmd"; then
+            _wwine_exe__cmd="$_wwine_exe_resolve"
+        fi
+    fi
+    WINEPREFIX="$_wwine_env__prefix" WINEARCH="$_wwine_env__arch" \
+              wine "$_wwine_exe__cmd" "$@"
+}
+
+_wwine_tricks()
+{
+    _wwine_env "$1" || return 1
+    shift
+    WINEPREFIX="$_wwine_env__prefix" WINEARCH="$_wwine_env__arch" \
+              winetricks "$@"
+}
+
+_wwine()
+{
+    _wwine=
+    case "$1" in
+        ""|l|list) _wwine_list "$@" ;;
+        *) _wwine__env="$1" ; shift
+           _wwine__action="$1"
+           [ $# -ne 0 ] && shift
+           case "$_wwine__action" in
+               ""|l|list|s|show)
+                   _wwine_show "$_wwine__env" ;;
+               c|create|i|install|setup)
+                   _wwine_setup "$_wwine__env" "$@";;
+               d|delete|destroy)
+                   _wwine_destroy "$_wwine__env" ;;
+               e|exe)
+                   _wwine_exe "$_wwine__env" "$@" ;;
+               t|tricks)
+                   _wwine_tricks "$_wwine__env" "$@" ;;
+           esac ;;
+    esac
+}
+
+wwine()
+{
+    _wwine "$@"
+    wwine="$?"
+    [ -n "$_wwine" ] && printf "%s\n" "$_wwine"
+    return $wwine
+}
+
+wwine_usage()
+{
+    echo "Usage : wwine [wwine_name] [list|setup|exe|tricks] [command_opts]"
+    echo "  wwine list"
+    echo "  wwine star_wars list"
+    echo "  wwine star_wars setup [arch=win64|win32]"
+    echo "  wwine star_wars exe ..."
+    echo "  wwine star_wars tricks ..."
+}
+
+if [ -n "$DEBUG" ]; then
+    set -x
+fi
+
+if [ "wwine" = "${0##*/}" ]; then
+    while getopts :hD opt; do
+        case $opt in
+            h) wwine_usage ; exit 0 ;;
+            D) set -x ;;
+        esac
+    done
+    wwine "$@"
+fi
+
+# wwine list
+# wwine star_wars list
+# wwine star_wars setup ...
+# wwine star_wars exe ...
+# wwine star_wars tricks ...
+
+# FIXME : add wineconsole support
+#         $ wineconsole cmd
+# FIXME : add winetricks support
+#         $ winetricks
+# DOC   : https://wiki.archlinux.org/index.php/wine#WINEARCH
