@@ -4,17 +4,59 @@
 #%toolsh_dir%
 #%toolsh_file%
 
-#%require% std.lib
-#%require% dev.lib
-#%require% terminal.lib
-#%require% file.lib
-#%require% git_scm.lib
+
+if [ -n "$GEM_HOME" ]; then
+    unset GEM_HOME || echo >&2 "cannot reset GEM_HOME"
+fi
+if [ -n "$GEM_PATH" ]; then
+    unset GEM_PATH || echo >&2 "cannot reset GEM_PATH"
+fi
 
 
-RUBY_EXTENSIONS='rb gemspec'
-RUBY_TEST_FRAMEWORKS='rspec minitest'
+for _RUBY_HOME in "${HOME_ALT}" "${HOME}"; do
+    _RUBY_RBENV_AVAILABLE=false
+    _RUBY_RBENV_ROOT="$_RUBY_HOME/.rbenv"
+    ( cd "$_RUBY_RBENV_ROOT" 2>/dev/null ) && [ -x "$_RUBY_RBENV_ROOT/bin/rbenv" ] && _RUBY_RBENV_AVAILABLE=true
 
-RUBY_QUALITY_GEMS='rubocop reek cane flay flog roodi sandi_meter laser
+    _RUBY_RVM_AVAILABLE=false
+    _RUBY_RVM_ROOT="$_RUBY_HOME/.rvm"
+    ( cd "$_RUBY_RVM_ROOT" 2>/dev/null ) && [ -x "$_RUBY_RVM_ROOT/scripts/rvm" ] && _RUBY_RVM_AVAILABLE=true
+
+
+    if $_RUBY_RBENV_AVAILABLE; then
+        RBENV_ROOT="$_RUBY_RBENV_ROOT"
+        export RBENV_ROOT
+        path_add_pre_pre "$_RUBY_RBENV_ROOT/bin"
+        eval "$(rbenv init -)"
+        [ -r "$_RUBY_RBENV_ROOT/completions/rbenv.${_SHELL_CUR_SHORT}" ] && . "$_RUBY_RBENV_ROOT/completions/rbenv.${_CSHELL_CUR_SHORT}"
+        break
+    elif $_RUBY_RVM_AVAILABLE; then
+        source "$_RUBY_RVM_ROOT/scripts/rvm"
+        break
+    fi
+done
+
+
+
+_RUBY_FILE_EXT='rb gemspec'
+
+is_ruby_file()
+{
+    for is_ruby_file__ext in $_RUBY_FILE_EXT; do
+        case "$1" in
+            *.$is_ruby_file__ext) return 0;;
+        esac
+    done
+    return 1
+}
+
+
+
+_RUBY_LIST_TEST_FRAMEWORKS='rspec minitest'
+
+
+
+_RUBY_LIST_QUALITY_GEMS='rubocop reek cane flay flog roodi sandi_meter laser
                  debt_ceiling
                  heckle churn
                  brakeman bullet
@@ -53,13 +95,34 @@ RUBY_QUALITY_GEMS='rubocop reek cane flay flog roodi sandi_meter laser
 # metric_fu    : Meta-analytics that runs churn, reek, roodi, etc. and graphs results.
 
 
+
 ruby_script_base()
 {
     cat <<EOF
 #!/usr/bin/env ruby
+# -*- mode: ruby -*-
 
 EOF
 }
+
+
+
+
+
+
+
+
+#%require% std.lib
+#%require% dev.lib
+#%require% terminal.lib
+#%require% file.lib
+#%require% git_scm.lib
+
+
+
+
+
+
 
 ruby_script_init()
 {
@@ -72,14 +135,6 @@ ruby_script_name()
     ruby_script_name="$1.rb"
 }
 
-is_ruby_file()
-{
-    case "$1" in
-        *.rb|\
-        *.gemspec) return 0;;
-    esac
-    return 1
-}
 
 ruby_file_tag()
 {
