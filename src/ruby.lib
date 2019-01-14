@@ -4,37 +4,57 @@
 #%toolsh_dir%
 #%toolsh_file%
 
-
-if [ -n "$GEM_HOME" ]; then
-    unset GEM_HOME || echo >&2 "cannot reset GEM_HOME"
-fi
-if [ -n "$GEM_PATH" ]; then
-    unset GEM_PATH || echo >&2 "cannot reset GEM_PATH"
-fi
-
-
-for _RUBY_HOME in "${HOME_ALT}" "${HOME}"; do
-    _RUBY_RBENV_AVAILABLE=false
-    _RUBY_RBENV_ROOT="$_RUBY_HOME/.rbenv"
-    ( cd "$_RUBY_RBENV_ROOT" 2>/dev/null ) && [ -x "$_RUBY_RBENV_ROOT/bin/rbenv" ] && _RUBY_RBENV_AVAILABLE=true
-
-    _RUBY_RVM_AVAILABLE=false
-    _RUBY_RVM_ROOT="$_RUBY_HOME/.rvm"
-    ( cd "$_RUBY_RVM_ROOT" 2>/dev/null ) && [ -x "$_RUBY_RVM_ROOT/scripts/rvm" ] && _RUBY_RVM_AVAILABLE=true
-
-
-    if $_RUBY_RBENV_AVAILABLE; then
-        RBENV_ROOT="$_RUBY_RBENV_ROOT"
-        export RBENV_ROOT
-        path_add_pre_pre "$_RUBY_RBENV_ROOT/bin"
-        eval "$(rbenv init -)"
-        [ -r "$_RUBY_RBENV_ROOT/completions/rbenv.${_SHELL_CUR_SHORT}" ] && . "$_RUBY_RBENV_ROOT/completions/rbenv.${_CSHELL_CUR_SHORT}"
-        break
-    elif $_RUBY_RVM_AVAILABLE; then
-        source "$_RUBY_RVM_ROOT/scripts/rvm"
-        break
+gem_clean()
+{
+    if [ -n "$GEM_HOME" ]; then
+        unset GEM_HOME || echo >&2 "cannot reset GEM_HOME"
     fi
-done
+    if [ -n "$GEM_PATH" ]; then
+        unset GEM_PATH || echo >&2 "cannot reset GEM_PATH"
+    fi
+}
+
+gem_clean
+
+
+
+rbenv_load()
+{
+    RBENV_ROOT="${1:-$HOME/.rbenv}"
+    export RBENV_ROOT
+    path_add_pre_pre "$RBENV_ROOT/bin"
+    eval "$(rbenv init -)"
+    [ -r "$RBENV_ROOT/completions/rbenv.${SHELL_SHORT}" ] && . "$RBENV_ROOT/completions/rbenv.${SHELL_SHORT}"
+}
+
+rvm_load()
+{
+    source "${1:-$HOME/.rvm/scripts/rvm}"
+}
+
+ruby_env()
+{
+    for _RUBY_HOME in "${HOME_ALT}" "${HOME}"; do
+        _RUBY_RBENV_AVAILABLE=false
+        _RUBY_RBENV_ROOT="$_RUBY_HOME/.rbenv"
+        ( cd "$_RUBY_RBENV_ROOT" 2>/dev/null ) && [ -x "$_RUBY_RBENV_ROOT/bin/rbenv" ] && _RUBY_RBENV_AVAILABLE=true
+
+        _RUBY_RVM_AVAILABLE=false
+        _RUBY_RVM_ROOT="$_RUBY_HOME/.rvm"
+        ( cd "$_RUBY_RVM_ROOT" 2>/dev/null ) && [ -x "$_RUBY_RVM_ROOT/scripts/rvm" ] && _RUBY_RVM_AVAILABLE=true
+
+
+        if $_RUBY_RBENV_AVAILABLE; then
+            rbenv_load "$_RUBY_RBENV_ROOT"
+            break
+        elif $_RUBY_RVM_AVAILABLE; then
+            rvm_load "$_RUBY_RVM_ROOT"
+            break
+        fi
+    done
+}
+
+ruby_env
 
 
 
