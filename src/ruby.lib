@@ -153,12 +153,17 @@ rbenv_load()
     #    . "$RBENV_ROOT/completions/rbenv.${SHELL_SHORT}"
 }
 
+
+
 ########## rvm
 rvm_load()
 {
     source "${1:-$HOME/.rvm/scripts/rvm}"
 }
 
+
+
+########## env
 ruby_env()
 {
     for _RUBY_HOME in "${HOME_ALT}" "${HOME}"; do
