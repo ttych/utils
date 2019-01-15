@@ -95,7 +95,7 @@ rbenv_load()
 {
     RBENV_ROOT="${1:-$HOME/.rbenv}"
     export RBENV_ROOT
-    PATH="$RBENV_ROOT/bin:$RBENV_ROOT/bin"
+    PATH="$RBENV_ROOT/bin:$PATH"
     export PATH
     eval "$(rbenv init -)"
     [ -r "$RBENV_ROOT/completions/rbenv.${SHELL_SHORT}" ] && . "$RBENV_ROOT/completions/rbenv.${SHELL_SHORT}"
