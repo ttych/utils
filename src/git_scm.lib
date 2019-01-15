@@ -116,3 +116,26 @@ _semver_split()
     _semver_split__fix=${_semver_split}
     _semver_split__patch=${_semver_split__fix}
 }
+
+
+########## clone
+_git_clone_or_update()
+{
+    _git_clone_or_update__source="$1"
+    _git_clone_or_update__target="$2"
+
+    [ -z "$_git_clone_or_update__source" ] && return 1
+    [ -z "$_git_clone_or_update__target" ] && return 1
+
+    cd "${_git_clone_or_update__target}" 2>/dev/null ||
+        mkdir -p "${_git_clone_or_update__target}" ||
+        return 1
+
+    if [ -d "$_git_clone_or_update__target/.git" ]; then
+        cd "${_git_clone_or_update__target}" &&
+            git pull -q --no-rebase --ff-only
+    else
+        git clone -q "${_git_clone_or_update__source%.git}.git" \
+                     "${_git_clone_or_update__target}"
+    fi
+}

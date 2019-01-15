@@ -4,6 +4,59 @@
 #%toolsh_dir%
 #%toolsh_file%
 
+#%require% git_scm.lib
+
+
+
+_RUBY_TMPDIR="${_RUBY_TMPDIR:-$_TMPDIR}"
+_RUBY_TMPDIR="${_RUBY_TMPDIR:-/tmp}"
+
+_RUBY_DEFAULT_VERSION=2.5.3
+_RUBY_FILE_EXT='rb gemspec'
+_RUBY_TEST_FRAMEWORKS='rspec minitest'
+
+_RUBY_QUALITY_GEMS='rubocop
+                    reek
+                    cane
+                    flay
+                    flog
+                    roodi
+                    sandi_meter
+                    laser
+                    debt_ceiling
+                    heckle
+                    churn
+                    brakeman
+                    bullet
+                    coveralls
+                    rubycritic
+                    simplecov
+                    simplecov-html
+                    metric_fu'
+# rubocop      : Ruby static code analyzer, based on the community Ruby style guide.
+# reek         : Detects code smells like coupling, clumping, large areas, short names.
+# cane         : Code quality threshold checking as part of your build.
+# flay         : Analyzes code for structural similarities to find areas for refactoring.
+# flog         : Scores an ABC complexity metric: Assignments, Branches, Calls.
+# roodi        : Ruby Object Oriented Design Inferometer: parses code to warn on design issues.
+# sandi_meter  : Static analysis tool for checking Ruby code for Sandi Metz' rules.
+# laser        : LASER: Lexically- and Semantically-Enriched Ruby bug detector.
+# debt_ceiling : Scores a technical debt metric and manages debt reduction.
+# heckle       : Perturbs our tests to ensure they are working correctly.
+# churn        : Detects code that changes often for us to review, refactor, retest.
+# brakeman     : Detects security vulnerabilities in Rails apps via static analysis.
+# bullet       : Detects database N+1 queries, unused eager loading, and counter cache needs.
+# rails_best_practices : parse codes in vendor, spec, test and features directories. [Retired; less-maintained]
+# coveralls    : Web service to track code coverage over time.
+# rubycritic   : Reporter that wraps gems such as Reek, Flay and Flog.
+# simplecov           : Code coverage analyzer for Ruby 1.9+
+# simplecov-html      : HTML output formatter for SimpleCov.
+# simplecov-rcov-text : Text output formatter for SimpleCov. [Outdated]
+# metrical     : Executes MetricFu separate from your project's dependencies. [requires newer metric_fu]
+# metric_fu    : Meta-analytics that runs churn, reek, roodi, etc. and graphs results.
+
+
+
 ########## clean
 gem_clean()
 {
@@ -19,86 +72,85 @@ gem_clean
 
 
 ########## rbenv
-# RBENV_INSTALL_RUBY_VERSION="${RBENV_INSTALL_RUBY_VERSION:-2.4.3}"
-# RBENV_INSTALL_REPO_BASE="${RBENV_INSTALL_REPO_BASE:-https://github.com/rbenv}"
-# RBENV_INSTALL_REPO_NAME="${RBENV_INSTALL_REPO_NAME:-rbenv}"
-# RBENV_INSTALL_REPO_PLUGINS="${RBENV_INSTALL_REPO_PLUGIN_NAMES:-ruby-build rbenv-vars}"
-
-# RBENV_INSTALL_TMPDIR=
-# for tmp_dir in "$HOME/tmp" /local /var/tmp; do
-#     touch $tmp_dir/test.$$ \
-#         && rm -f $tmp_dir/test.$$ \
-#         && RBENV_INSTALL_TMPDIR="$tmp_dir" \
-#         && break
-# done
-
-# RBENV_INSTALL_PATH="${1}"
-# RBENV_INSTALL_PATH="${RBENV_INSTALL_PATH:-$(rbenv root 2>/dev/null)}"
-# RBENV_INSTALL_PATH="${RBENV_INSTALL_PATH:-$RBENV_ROOT}"
-# RBENV_INSTALL_PATH="${RBENV_INSTALL_PATH:-$HOME/.rbenv}"
+RBENV_REPO_ORGA="${RBENV_REPO_ORGA:-https://github.com/rbenv}"
+RBENV_REPO_NAME="${RBENV_REPO_NAME:-rbenv}"
+RBENV_PLUGINS="${RBENV_PLUGINS:-ruby-build rbenv-vars}"
 
 
-# clone_or_update()
-# {
-#     clone_or_update__source="$1"
-#     clone_or_update__target="$2"
-#     [ -z "$clone_or_update__source" ] && return 1
-#     [ -z "$clone_or_update__target" ] && return 1
+rbenv_guess_path()
+{
+    rbenv_guess_path="${1}"
+    rbenv_guess_path="${rbenv_guess_path:-$(rbenv root 2>/dev/null)}"
+    rbenv_guess_path="${rbenv_guess_path:-$RBENV_ROOT}"
+    rbenv_guess_path="${rbenv_guess_path:-$HOME/.rbenv}"
+}
 
-#     # clone
-#     cd "${clone_or_update__target}" 2>/dev/null || mkdir -p "${clone_or_update__target}" || return 1
-#     [ -d "$clone_or_update__target/.git" ] ||
-#         git clone -q "${clone_or_update__source}.git" "${clone_or_update__target}" ||
-#         return 1
+rbenv_install()
+{
+    rbenv_guess_path "$1"
+    rbenv_install__path="$rbenv_guess_path"
 
-#     # update
-#     cd "${clone_or_update__target}" && git pull -q || \
-#             return 1
-# }
+    rbenv_install_base "$rbenv_install__path" &&
+        rbenv_install_plugins "$rbenv_install__path" &&
+        rbenv_load "$rbenv_install__path" &&
+        rbenv_install_ruby &&
+        rbenv_install_bundler
+}
 
-# rbenv_profile()
-# {
-#     cat <<EOF
-# # rbenv profile
-# RBENV_ROOT="$RBENV_INSTALL_PATH" ; export RBENV_ROOT
-# PATH=\$RBENV_ROOT/bin:\$PATH ; export PATH
-# eval "\$(rbenv init -)"
-# EOF
-# }
+rbenv_install_base()
+{
+    rbenv_guess_path "$1"
+    rbenv_install_base__path="$rbenv_guess_path"
 
+    _git_clone_or_update "$RBENV_REPO_ORGA/$RBENV_REPO_NAME" "$rbenv_install_base__path"
+}
 
-# set -e
-# # install rbenv
-# clone_or_update "$RBENV_INSTALL_REPO_BASE/$RBENV_INSTALL_REPO_NAME" \
-#                 "$RBENV_INSTALL_PATH"
+rbenv_install_plugins()
+{
+    rbenv_guess_path "$1"
+    rbenv_install_plugins__path="$rbenv_guess_path"
 
-# # install plugins
-# mkdir -p "$RBENV_INSTALL_PATH/plugins"
-# for plugin in $RBENV_INSTALL_REPO_PLUGINS; do
-#     clone_or_update "$RBENV_INSTALL_REPO_BASE/$plugin" \
-#                     "$RBENV_INSTALL_PATH/plugins/$plugin"
-# done
+    mkdir -p "$rbenv_install_plugins__path/plugins"
+    for rbenv_install_plugins__p in $RBENV_PLUGINS; do
+        _git_clone_or_update "$RBENV_REPO_ORGA/$rbenv_install_plugins__p" \
+                             "$rbenv_install_plugins__path/plugins/$rbenv_install_plugins__p"
+    done
+}
 
-# # profile
-# rbenv_profile
-# eval "$(rbenv_profile)"
+rbenv_install_ruby()
+{
+    rbenv_install_ruby__version="${1:-$_RUBY_DEFAULT_VERSION}"
+    [ -n "$_RUBY_TMPDIR" ] && RBENV_BUILD_ROOT="$_RUBY_TMPDIR"
+    rbenv install -s "$rbenv_install_ruby__version"
+    rbenv_install_ruby__global=$(rbenv global)
+    [ -z "$rbenv_install_ruby__global" ] &&
+        rbenv global "$rbenv_install_ruby__version"
+}
 
-# # install ruby
-# [ -n "$RBENV_INSTALL_TMPDIR" ] && RBENV_BUILD_ROOT="$RBENV_INSTALL_TMPDIR"
-# rbenv install -s "$RBENV_INSTALL_RUBY_VERSION"
-# rbenv global "$RBENV_INSTALL_RUBY_VERSION"
+rbenv_install_bundler()
+{
+    gem install bundler
+}
 
-# # install bundler
-# gem install bundler
+rbenv_update()
+{
+    rbenv_guess_path "$1"
+    rbenv_update__path="$rbenv_guess_path"
+
+    rbenv_install_base "$rbenv_update__path" &&
+        rbenv_install_plugins "$rbenv_update__path"
+}
 
 rbenv_load()
 {
-    RBENV_ROOT="${1:-$HOME/.rbenv}"
+    rbenv_guess_path "$1"
+    RBENV_ROOT="$rbenv_guess_path"
     export RBENV_ROOT
     PATH="$RBENV_ROOT/bin:$PATH"
     export PATH
     eval "$(rbenv init -)"
-    [ -r "$RBENV_ROOT/completions/rbenv.${SHELL_SHORT}" ] && . "$RBENV_ROOT/completions/rbenv.${SHELL_SHORT}"
+    #[ -r "$RBENV_ROOT/completions/rbenv.${SHELL_SHORT}" ] &&
+    #    . "$RBENV_ROOT/completions/rbenv.${SHELL_SHORT}"
 }
 
 ########## rvm
@@ -134,7 +186,7 @@ ruby_env
 
 
 
-_RUBY_FILE_EXT='rb gemspec'
+
 
 is_ruby_file()
 {
@@ -148,47 +200,22 @@ is_ruby_file()
 
 
 
-_RUBY_LIST_TEST_FRAMEWORKS='rspec minitest'
 
 
 
-_RUBY_LIST_QUALITY_GEMS='rubocop reek cane flay flog roodi sandi_meter laser
-                 debt_ceiling
-                 heckle churn
-                 brakeman bullet
-                 coveralls
-                 rubycritic
-                 simplecov simplecov-html
-                 metric_fu'
 
-# rubocop      : Ruby static code analyzer, based on the community Ruby style guide.
-# reek         : Detects code smells like coupling, clumping, large areas, short names.
-# cane         : Code quality threshold checking as part of your build.
-# flay         : Analyzes code for structural similarities to find areas for refactoring.
-# flog         : Scores an ABC complexity metric: Assignments, Branches, Calls.
-# roodi        : Ruby Object Oriented Design Inferometer: parses code to warn on design issues.
-# sandi_meter  : Static analysis tool for checking Ruby code for Sandi Metz' rules.
-# laser        : LASER: Lexically- and Semantically-Enriched Ruby bug detector.
 
-# debt_ceiling : Scores a technical debt metric and manages debt reduction.
 
-# heckle       : Perturbs our tests to ensure they are working correctly.
-# churn        : Detects code that changes often for us to review, refactor, retest.
 
-# brakeman     : Detects security vulnerabilities in Rails apps via static analysis.
-# bullet       : Detects database N+1 queries, unused eager loading, and counter cache needs.
-# rails_best_practices : parse codes in vendor, spec, test and features directories. [Retired; less-maintained]
 
-# coveralls    : Web service to track code coverage over time.
 
-# rubycritic   : Reporter that wraps gems such as Reek, Flay and Flog.
 
-# simplecov           : Code coverage analyzer for Ruby 1.9+
-# simplecov-html      : HTML output formatter for SimpleCov.
-# simplecov-rcov-text : Text output formatter for SimpleCov. [Outdated]
 
-# metrical     : Executes MetricFu separate from your project's dependencies. [requires newer metric_fu]
-# metric_fu    : Meta-analytics that runs churn, reek, roodi, etc. and graphs results.
+
+
+
+
+
 
 
 
@@ -212,7 +239,7 @@ EOF
 #%require% dev.lib
 #%require% terminal.lib
 #%require% file.lib
-#%require% git_scm.lib
+
 
 
 
