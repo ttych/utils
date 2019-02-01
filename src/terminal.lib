@@ -121,3 +121,21 @@ terminal_cls()
 {
     printf "${TERMINAL_CLS:=$(clear)}"
 }
+
+
+## terminal_colors_info - display colors info
+terminal_colors_info()
+{
+    printf "colors count : %s\n" "$(tput colors)"
+
+    color=0
+    while [ $color -lt 256 ]; do
+        tput setab $color
+        echo -n " $color "
+        color=$(($color + 1))
+    done
+    tput sgr0
+
+    # xterm
+    #cd /usr/share/terminfo/x && ls xterm*color*
+}
