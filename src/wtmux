@@ -1,0 +1,71 @@
+#!/bin/sh
+# -*- mode: sh -*-
+
+has_tmux()
+{
+    which tmux >/dev/null 2>/dev/null
+}
+
+in_tmux()
+{
+    [ -n "$TMUX" ]
+}
+
+not_in_tmux()
+{
+    ! in_tmux
+}
+
+tmux_session_exists()
+{
+    [ -z "$1" ] && return 1
+    tmux list-sessions | sed -E 's/:.*$//' | grep -q "^${1}$"
+}
+
+tmux_session_name_for()
+{
+    tmux_session_name_for__base="$1"
+    if [ -z "$tmux_session_name_for__base" ]; then
+        tmux_session_name_for__base="${PWD##*/}"
+    fi
+    tmux_session_name_for="$(echo $tmux_session_name_for__base | tr . _)"
+}
+
+_wtmux_auto()
+{
+    has_tmux || return 1
+
+    tmux_session_name_for "$1"
+
+    if not_in_tmux; then
+        tmux new-session -As "$tmux_session_name_for"
+    else
+        if ! tmux_session_exists "$tmux_session_name_for"; then
+            TMUX='' tmux new-session -Ads "$tmux_session_name_for"
+        fi
+        tmux switch-client -t "$tmux_session_name_for"
+    fi
+}
+
+
+
+_wtmux()
+{
+    _wtmux=
+    _wtmux__ret=0
+
+    case "$1" in
+        *) _wtmux_auto "$@"
+           _wtmux__ret="$?"
+           ;;
+    esac
+
+    return $_wtmux__ret
+}
+
+if [ "${0##*/}" = 'wtmux' ]; then
+    _wtmux "$@"
+    wtmux="$?"
+    [ -n "_wtmux" ] && printf "%s\n" "$_wtmux"
+    return $wtmux
+fi
