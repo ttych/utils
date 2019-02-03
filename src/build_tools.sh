@@ -87,9 +87,17 @@ BUILD_TOOLS_XBINDKEYS_URL_PATTERN='http://www.nongnu.org/xbindkeys/xbindkeys-${v
 BUILD_TOOLS_XBINDKEYS_DEFAULT_VERSION='1.8.6'
 
 #> emacs - emacs editor
-BUILD_TOOLS_EMACS_CONFIG='--with-x-toolkit=gtk2 --with-gif=no'
+#BUILD_TOOLS_EMACS_CONFIG='--with-x-toolkit=gtk2 --with-gif=no --with-x=yes'
+BUILD_TOOLS_EMACS_CONFIG='--with-x-toolkit=gtk3 --with-gif=no --with-x=yes --with-gnutls=yes'
 BUILD_TOOLS_EMACS_PREREQ_REDHAT='gtk2-devel libtiff-devel gnutls-devel'
-BUILD_TOOLS_EMACS_PREREQ_UBUNTU='libgtk2.0-dev libtiff5-dev libgif-dev'
+BUILD_TOOLS_EMACS_PREREQ_UBUNTU='libtiff5-dev libgif-dev libgnutls28-dev libgtk-3-dev libncurses-dev'
+BUILD_TOOLS_EMACS_URL_PATTERN='http://ftpmirror.gnu.org/emacs/emacs-${version}.tar.gz'
+BUILD_TOOLS_EMACS_DEFAULT_VERSION='26.1'
+
+#> emacs-nox - emacs editor without X
+BUILD_TOOLS_EMACS_CONFIG='--with-x=no --with-gif=no --with-gnutls=yes'
+BUILD_TOOLS_EMACS_PREREQ_REDHAT='libtiff-devel gnutls-devel'
+BUILD_TOOLS_EMACS_PREREQ_UBUNTU='libtiff5-dev libgif-dev libgnutls28-dev libncurses-dev'
 BUILD_TOOLS_EMACS_URL_PATTERN='http://ftpmirror.gnu.org/emacs/emacs-${version}.tar.gz'
 BUILD_TOOLS_EMACS_DEFAULT_VERSION='26.1'
 
