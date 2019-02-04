@@ -283,21 +283,27 @@ extract_tar_bz2()
 
 extract_gz()
 {
-    gunzip "$1"
+    gunzip -k "$1"
 }
 
 extract_bz2()
 {
-    bunzip2 "$1"
+    bunzip2 -k "$1"
 }
 
 extract_xz()
 {
-    unxz "$1"
+    unxz -k "$1"
 }
 
 extract()
 {
+    extract__delete=FALSE
+    if [ "X$1" = "X-rm" ]; then
+        extract__delete=TRUE
+        shift
+    fi
+
     [ -z "$1" ] && return 1
     if [ -n "$2" ]; then
         mkdir -p "$2" && cd "$2" || \
@@ -312,7 +318,7 @@ extract()
                 *."$extract__ext")
                     extract__ext_norm=`echo "$extract__ext" | tr '.' '_'`
                     extract_"${extract__ext_norm}" "$extract__file" || return 1
-                    rm -f "$extract__file"
+                    extract__delete && rm -f "$extract__file"
                     extract__file="${extract__file%.$extract__ext}"
                     extract__possible=TRUE
                     break
@@ -324,6 +330,14 @@ extract()
     return 0
 }
 
+ex ()
+{
+    extract "$@"
+}
+exr()
+{
+    extract -rm "$@"
+}
 
 ##################################################
 # download
