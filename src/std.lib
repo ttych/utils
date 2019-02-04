@@ -318,7 +318,7 @@ extract()
                 *."$extract__ext")
                     extract__ext_norm=`echo "$extract__ext" | tr '.' '_'`
                     extract_"${extract__ext_norm}" "$extract__file" || return 1
-                    extract__delete && rm -f "$extract__file"
+                    $extract__delete && rm -f "$extract__file"
                     extract__file="${extract__file%.$extract__ext}"
                     extract__possible=TRUE
                     break
@@ -330,11 +330,11 @@ extract()
     return 0
 }
 
-ex ()
+xtr()
 {
     extract "$@"
 }
-exr()
+xtrr()
 {
     extract -rm "$@"
 }
