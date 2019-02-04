@@ -126,7 +126,7 @@ BUILD_TOOLS_GROOVY_DEFAULT_VERSION='2.5.4'
 
 #> tmux - tmux
 BUILD_TOOLS_TMUX_PREREQ_REDHAT=
-BUILD_TOOLS_TMUX_PREREQ_UBUNTU=
+BUILD_TOOLS_TMUX_PREREQ_UBUNTU='libevent-dev'
 BUILD_TOOLS_TMUX_URL_PATTERN='https://github.com/tmux/tmux/releases/download/${version}/tmux-${version}.tar.gz'
 BUILD_TOOLS_TMUX_DEFAULT_VERSION='2.8'
 
