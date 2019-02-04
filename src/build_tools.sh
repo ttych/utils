@@ -8,37 +8,6 @@
 
 #
 
-dist_build_tools()
-{
-    [ -z "$1" ] && return 1
-    dist_build_tools__name="$1" ; shift
-    if [ $# -gt 1 ]; then
-        dist_build_tools__dversion="$1" ; shift
-    fi
-    if [ -z "$dist_build_tools__dversion" ]; then
-        eval dist_build_tools__dversion=\"\$TOOLS_BUILD_"${dist_build_tools__name}"_DVERSION\"
-    fi
-    eval dist_build_tools__count=\"\$TOOLS_BUILD_"${dist_build_tools__name}"_DVERSION_COUNT\"
-    if [ -n "$dist_build_tools__count" ]; then
-        while [ $dist_build_tools__count -gt 1 ]; do
-            dist_build_tools__dversion="$dist_build_tools__dversion ${dist_build_tools__dversion%% *}"
-            dist_build_tools__count=$(($dist_build_tools__count - 1))
-        done
-    fi
-
-    eval dist_build_tools__format=\"\$TOOLS_BUILD_"${dist_build_tools__name}"_FORMAT\"
-    if [ -z "dist_build_tools__format" ] || [ -z "$dist_build_tools__dversion" ]; then
-        return 1
-    fi
-
-    dist_identify_location "$1" && shift
-    dist_build_tools__loc="$dist_identify_location"
-
-    dist_build_interpolate "$dist_build_tools__format" "${1:-$dist_build_tools__dversion}" && \
-        dist_build $dist_build_tools__loc "$dist_build_interpolate"
-}
-
-#
 
 #> ruby - ruby interpreter
 BUILD_TOOLS_RUBY_PREREQ_REDHAT='readline-devel openssl-devel zlib-devel sqlite-devel'
@@ -155,6 +124,12 @@ BUILD_TOOLS_GROOVY_PREREQ_UBUNTU=
 BUILD_TOOLS_GROOVY_URL_PATTERN='https://bintray.com/artifact/download/groovy/maven/apache-groovy-binary-${version}.zip'
 BUILD_TOOLS_GROOVY_DEFAULT_VERSION='2.5.4'
 
+#> tmux - tmux
+BUILD_TOOLS_TMUX_PREREQ_REDHAT=
+BUILD_TOOLS_TMUX_PREREQ_UBUNTU=
+BUILD_TOOLS_TMUX_URL_PATTERN='https://github.com/tmux/tmux/releases/download/${version}/tmux-${version}.tar.gz'
+BUILD_TOOLS_TMUX_DEFAULT_VERSION='2.8'
+
 
 build_tools_env()
 {
@@ -189,13 +164,27 @@ build_tools()
     dist_build $build_tools__loc "$build_tools_env__url" "$build_tools_env__config" "$build_tools_env__url_header"
 }
 
+download_tools_to_build()
+{
+    [ -z "$1" ] && return 1
+    build_tools_env "$1" "$2" || return 1
+
+    dist_download "$build_tools_env__url" "$build_tools_env__url_header"
+}
+
 #
 
 if [ "$1" = '-h' ] || [ $# -eq 0 ]; then
-    printf '%s\n' "Usage is : $0 [-h] [try_alt|alt|loc=|try_loc=] tool1[:version] [tool2 ...]"
+    printf '%s\n' "Usage is : $0 [-h] [-dl] [try_alt|alt|loc=|try_loc=] tool1[:version] [tool2 ...]"
     printf '%s\n' 'Available tools are :'
     grep '^#> ' "$0"
     exit 0
+fi
+
+download_only=FALSE
+if [ "$1" = '-dl' ]; then
+    download_only=TRUE
+    shift
 fi
 
 dist_identify_location "$1" && shift
@@ -206,5 +195,9 @@ for to_build; do
     [ "$to_build__version" = "$to_build" ] && to_build__version=
     to_build__name="${to_build%:*}"
 
-    build_tools $loc "${to_build__name}" "${to_build__version}"
+    if $download_only; then
+        download_tools_to_build "${to_build__name}" "${to_build__version}"
+    else
+        build_tools $loc "${to_build__name}" "${to_build__version}"
+    fi
 done

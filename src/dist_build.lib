@@ -123,6 +123,11 @@ dist_build()
     return $dist_build__ret
 )
 
+dist_download()
+(
+    download "$1" "." "$3" || return 1
+)
+
 dist_build_interpolate()
 {
     dist_build_interpolate=$(printf "$1" "$@")
