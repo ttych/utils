@@ -67,5 +67,5 @@ if [ "${0##*/}" = 'wtmux' ]; then
     _wtmux "$@"
     wtmux="$?"
     [ -n "_wtmux" ] && printf "%s\n" "$_wtmux"
-    return $wtmux
+    exit $wtmux
 fi
