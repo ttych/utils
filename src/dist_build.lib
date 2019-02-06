@@ -94,7 +94,7 @@ dist_build()
     _mktemp_dir && dist_build__dir="$_mktemp_dir" || return 1
     download "$1" "$_mktemp_dir" "$3" || return 1
     cd "$_mktemp_dir" || return 1
-    extract "$download__file" || return 1
+    extract -rm "$download__file" || return 1
     if [ -d "$extract__file" ]; then
         cd "$extract__file" || return 1
     else

@@ -14,7 +14,7 @@ samples()
 
     rm -f "samples" "$samples__dir" "$samples__arch" || return 1
     wget "$1" -O"$samples__arch" || return 1
-    extract "$samples__arch" || return 1
+    extract -rm "$samples__arch" || return 1
     rm -f "$samples__arch" || return 1
     mv "$samples__dir" "samples"
 }
