@@ -223,7 +223,7 @@ ruby_rgr_stage()
 {
     $ruby_rgr__verbose && \
         ruby_rgr_subtitle "git stage : $1"
-    git_scm_add "$1"
+    git_add "$1"
 }
 
 ruby_rspec()

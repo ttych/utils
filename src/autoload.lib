@@ -6,3 +6,4 @@ autoload_add base %%utils_dir%%/local.lib
 autoload_add interactive %%utils_dir%%/goto.lib
 autoload_add interactive %%utils_dir%%/ruby_base.lib
 autoload_add interactive %%utils_dir%%/pyv.lib
+autoload_add interactive %%utils_dir%%/git_scm.lib
