@@ -1,4 +1,6 @@
- #!/bin/sh
+#!/bin/sh
+# -*- mode: sh -*-
+
 
 #%require% std.lib
 
@@ -75,12 +77,12 @@ _print_duplicate()
 
 find_duplicate()
 (
-    if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-        echo >&2 "Usage: find_duplicate [action=_print_duplicate] dir"
+    if [ $# -lt 1 ]; then
+        echo >&2 "Usage: find_duplicate [action(_print_duplicate)] dir-1 ... dir-n"
         return 1
     fi
     find_duplicate__action=_print_duplicate
-    if [ $# -eq 2 ]; then
+    if [ $# -gt 1 ] && [ ! -d "$1" ]; then
         find_duplicate__action="$1"
         shift
     fi

@@ -1,0 +1,6 @@
+#!/bin/sh
+# -*- mode: sh -*-
+
+#%require% file.lib
+
+find_duplicate "$@"
