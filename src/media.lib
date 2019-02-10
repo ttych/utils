@@ -14,7 +14,8 @@ _media_info_clean()
 
     for _media_info_clean__v in audio_bitrate audio_codec audio_hz bitrate \
                                 duration duration_sec format video_bitrate \
-                                video_codec video_fps video_resolution; do
+                                video_codec video_fps video_resolution \
+                                _extra_stream subtitle; do
         eval _media_info__${1}_${_media_info_clean__v}=
     done
 }
@@ -26,7 +27,7 @@ _media_info()
     _media_info_data "$1" || return 1
 
     # echo "$_media_info_data"
-    eval $(echo "$_media_info_data" | awk '
+    _media_info__parse=$(echo "$_media_info_data" | awk '
          BEGIN { input_index=0
                  print ":" }
          $1 ~ /Input/ { input_index=substr($2,2,index($2,",")-2)
@@ -40,7 +41,7 @@ _media_info()
                                                     }
                                               }
                          }
-         $1 ~ /Stream/ { if ($3 ~ /Video/) { print "_media_info__"input_index"_video_codec=\""$4"\""
+f         $1 ~ /Stream/ { if ($3 ~ /Video/) { print "_media_info__"input_index"_video_codec=\""$4"\""
                                              for(i=4;i<=NF;i++) {
                                                  if ($i ~ /fps/) { tmp=i-1
                                                                    print "_media_info__"input_index"_video_fps=\""$tmp"\"" }
@@ -58,9 +59,14 @@ _media_info()
                                                                           print "_media_info__"input_index"_audio_bitrate=\""$tmp" "$i"\"" }
                                                                      }
                                                 }
+                         else if ($3 ~ /Subtitle/) { $1=$2=$3=""
+                                                     print "_media_info__"input_index"_subtitle=\""$0"\""
+                                                   }
                          else { print "_media_info__"input_index"__extra_stream=\""$0"\"" } }
          END { print "_media_info__last_index="input_index }
     ')
+
+    eval "$_media_info__parse"
 
     _media_info__total_duration_sec=0
     _media_info___index=0
@@ -147,4 +153,30 @@ audio_convert()
     :
     # flac => mp3
     #      ffmpeg -i input.flac -ab 196k -ac 2 -ar 48000 output.mp3
+}
+
+_exif_info()
+{
+    [ $# -ne 1 ] && return 1
+    _exif_info=$(
+        exiftool "$1" |
+            ruby -ne 'k, v = $_.match(/^([^:]*)\s+:\s+(.*$)$/).captures; puts "_exif_info__#{k.downcase.strip.tr(" /", "_")}=\"#{v}\""'
+    )
+    eval "$_exif_info"
+}
+
+exif_info()
+{
+    _exif_info "$1" &&
+        echo "$_exif_info"
+}
+
+mts_rename_with_date()
+{
+    _exif_info "$1" || return 1
+    mts_rename_with_date__basedir=
+    [ "${1%/*}" != "${1}" ] && mts_rename_with_date__basedir="${1%/*}/"
+
+    mts_rename_with_date="${mts_rename_with_date__basedir}$(echo ${_exif_info__date_time_original%+*} | tr ': ' '-_').${1##*.}"
+    mv -i "$1" "$mts_rename_with_date"
 }
