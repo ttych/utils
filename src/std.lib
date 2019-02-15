@@ -486,38 +486,47 @@ lib_load()
     lib_load__r=0
     for lib_load__l; do
         lib_load__found=0
-        case "${lib_load__l}" in
-            /*) lib_load__prefix= ;;
-            *) lib_load__prefix="./" ;;
+        lib_load__ext_lib='.lib'
+        case $lib_load__l in
+            *.lib) lib_load__ext_lib= ;;
         esac
-        # direct
-        lib_source "${lib_load__prefix}${lib_load__l}${lib_load__ext}" &&
-            lib_load__found=1 &&
-            break
-        if [ -n "$lib_load__prefix" ]; then
-            # if rel : rel to script location
-            if [ -n "$0" ]; then
-                lib_load__sc_name="${0##*/}"
-                lib_load__sc_rpath="${0%$lib_load__sc_name}"
-                lib_load__sc_path=`cd "${lib_load__sc_rpath:-.}" && pwd`
-                lib_source "${lib_load__cpath}/${lib_load__l}${lib_load__ext}" &&
-                    lib_load__found=1 &&
+        for lib_load__ext in $lib_load__ext_lib ""; do
+            case "${lib_load__l}" in
+                /*) lib_load__prefix= ;;
+                *) lib_load__prefix="./" ;;
+            esac
+            # direct
+            if [ -r "${lib_load__prefix}${lib_load__l}${lib_load__ext}" ]; then
+                . "${lib_load__prefix}${lib_load__l}${lib_load__ext}" 2>/dev/null && \
+                    lib_load__found=1 && \
                     break
+            elif [ -n "$lib_load__prefix" ]; then
+                # if rel : rel to script location
+                if [ -n "$0" ]; then
+                    lib_load__sc_name="${0##*/}"
+                    lib_load__sc_rpath="${0%$lib_load__sc_name}"
+                    lib_load__sc_path=`cd "${lib_load__sc_rpath:-.}" && pwd`
+                    if [ -r "$lib_load__sc_path/${lib_load__l}${lib_load__ext}" ]; then
+                        . "$lib_load__sc_path/${lib_load__l}${lib_load__ext}" 2>/dev/null && \
+                            lib_load__found=1 && \
+                            break
+                    fi
+                fi
+                # if rel : rel to $PATH
+                if [ $lib_load__found -eq 0 ]; then
+                    [ -z "$lib_load__bIFS" ] && lib_load__bIFS="$IFS"
+                    IFS=:
+                    for lib_load__p in $PATH; do
+                        [ -r "${lib_load__p}/${lib_load__l}${lib_load__ext}" ] || continue
+                        IFS="$lib_load__bIFS" . "${lib_load__p}/${lib_load__l}${lib_load__ext}" && \
+                            lib_load__found=1 && \
+                            break
+                    done
+                    IFS="$lib_load__bIFS"
+                    lib_load__bIFS=
+                fi
             fi
-            # if rel : rel to $PATH
-            if [ $lib_load__found -eq 0 ]; then
-                lib_load__path="$PATH"
-                while [ -n "$lib_load__path" ]; do
-                    lib_load__cpath="${lib_load__path%%:*}"
-                    lib_load__path="${lib_load__path#$lib_load__cpath}"
-                    lib_load__path="${lib_load__path#:}"
-                    lib_source "${lib_load__cpath}/${lib_load__l}${lib_load__ext}" &&
-                        lib_load__found=1 &&
-                        break
-                done
-            fi
-        fi
-
+        done
         [ "$lib_load__found" -eq 0 ] && lib_load__r=1
     done
     return $lib_load__r
