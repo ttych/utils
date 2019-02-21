@@ -235,6 +235,11 @@ ruby_rspec()
     ruby_exec rspec "$@"
 }
 
+ruby_rspec_all()
+{
+    ruby_rspec
+}
+
 ruby_ruby()
 {
     ruby_exec ruby "$@"
