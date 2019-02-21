@@ -267,6 +267,7 @@ _pyv_venv_fix()
     cd "$1/bin" || return 1
     version=`./python --version`
     version="${version#* }"
+    version="${version%% *}"
     while [ -n "$version" ]; do
         bin="python$version"
         [ -x "$bin" ] || ln -s python "$bin"
@@ -404,7 +405,7 @@ _pyv()
             _pyv_dist "$@"
             _pyv__ret=$?
             ;;
-        Dfix|dfix|dist_fix|dists_fix)
+        Df|Dfix|dfix|dist_fix|dists_fix)
             _pyv_dist_fix
             _pyv__ret=$?
             ;;
