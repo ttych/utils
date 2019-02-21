@@ -33,7 +33,7 @@ filename_to_posix()
 
 
 ### OK / KO
-FILENAME_KO_CHARS="][|#?><*&${BKS}\$'\"${SPC}${NL}${TAB}${CR}${BS}${DEL}()"
+FILENAME_KO_CHARS="][|#?!><*&${BKS}\$'\"${SPC}${NL}${TAB}${CR}${BS}${DEL}()"
 is_filename_ok()
 {
     case $1 in
