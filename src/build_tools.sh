@@ -33,7 +33,7 @@ BUILD_TOOLS_SUBLIME_DEFAULT_VERSION='3_build_3176_x64'
 
 #> rubymine - RubyMine
 BUILD_TOOLS_RUBYMINE_URL_PATTERN='https://download.jetbrains.com/ruby/RubyMine-${version}.tar.gz'
-BUILD_TOOLS_RUBYMINE_DEFAULT_VERSION='2017.3.2'
+BUILD_TOOLS_RUBYMINE_DEFAULT_VERSION='2018.3.5'
 
 #> pycharm - PyCharm
 BUILD_TOOLS_PYCHARM_URL_PATTERN='https://download.jetbrains.com/python/pycharm-${version}.tar.gz'
